@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres_user_management
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: user_management
+    ports:
+      - "5432:5432"  # Maps the container's port to the host
+    volumes:
+      - user_management:/var/lib/postgresql/data  # Persistent storage
+
+volumes:
+  user_management:

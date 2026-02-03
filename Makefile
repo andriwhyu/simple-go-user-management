@@ -15,3 +15,17 @@ migrate-down:
 .PHONY: migrate-force
 migrate-force:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_ADDR) force $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: build
+build:
+	@cd build && docker-compose up -d
+
+.PHONY: run-server
+run-server:
+    # ./bin is use by the air tool
+	@mkdir -p ./bin
+	@air
+
+.PHONY: clean
+clean:
+	@cd build && docker-compose down
