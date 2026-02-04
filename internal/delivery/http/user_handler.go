@@ -14,6 +14,11 @@ func NewUserHandler(userUsecase domain.UserUsecase) *UserHandler {
 	return &UserHandler{userUsecase: userUsecase}
 }
 
+type CreateUserRequest struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -21,6 +26,30 @@ type ErrorResponse struct {
 type SuccessResponse struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+}
+
+func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request payload")
+		return
+	}
+
+	user, err := h.userUsecase.Create(r.Context(), req.Name, req.Email)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, user)
+}
+
+func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	users, err := h.userUsecase.GetAll(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusOK, users)
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -31,11 +60,17 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error":"Internal server error"}`))
+		_, err = w.Write([]byte(`{"error":"Internal server error"}`))
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	_, err = w.Write(response)
+	if err != nil {
+		return
+	}
 }

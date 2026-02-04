@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/andriwhyu/simple-go-user-management/internal/domain"
+	"time"
 )
 
 type userRepository struct {
@@ -15,6 +17,29 @@ func NewUserRepository(db *sql.DB) domain.UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
+	query := `
+		INSERT INTO users (name, email, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`
+
+	now := time.Now()
+	user.CreatedAt = now
+	user.UpdatedAt = now
+
+	err := r.db.QueryRowContext(
+		ctx,
+		query,
+		user.Name,
+		user.Email,
+		user.CreatedAt,
+		user.UpdatedAt,
+	).Scan(&user.ID)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -23,12 +48,65 @@ func (r *userRepository) GetByID(ctx context.Context, id int) (*domain.User, err
 }
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	return nil, nil
+	query := `
+		SELECT id, name, email, created_at, updated_at
+		FROM users
+		WHERE email = $1
+	`
+
+	var user domain.User
+	err := r.db.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r *userRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
-	return nil, nil
+	query := `
+		SELECT id, name, email, created_at, updated_at
+		FROM users
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		err = rows.Close()
+		if err != nil {
+			return
+		}
+	}(rows)
+
+	users := make([]*domain.User, 0)
+	for rows.Next() {
+		var user domain.User
+		err := rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Email,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, nil
 }
+
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 	return nil
 }

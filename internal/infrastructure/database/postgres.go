@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"github.com/andriwhyu/simple-go-user-management/internal/utils"
 	"log"
-	"os"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -51,20 +51,11 @@ func NewPostgresDB(cfg Config) (*sql.DB, error) {
 
 func LoadConfigFromEnv() Config {
 	return Config{
-		Host:     getEnv("DB_HOST", "localhost"),
-		Port:     getEnv("DB_PORT", "5432"),
-		User:     getEnv("DB_USER", "admin"),
-		Password: getEnv("DB_PASSWORD", "adminpassword"),
-		DBName:   getEnv("DB_NAME", "user_management"),
-		SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		Host:     utils.GetStringEnv("DB_HOST", "localhost"),
+		Port:     utils.GetStringEnv("DB_PORT", "5432"),
+		User:     utils.GetStringEnv("DB_USER", "admin"),
+		Password: utils.GetStringEnv("DB_PASSWORD", "adminpassword"),
+		DBName:   utils.GetStringEnv("DB_NAME", "user_management"),
+		SSLMode:  utils.GetStringEnv("DB_SSLMODE", "disable"),
 	}
-}
-
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-
-	return value
 }
