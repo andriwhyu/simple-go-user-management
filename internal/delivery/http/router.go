@@ -30,6 +30,12 @@ func NewRouter(userHandler *UserHandler) http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", userHandler.Create)
 			r.Get("/", userHandler.GetAll)
+
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", userHandler.GetByID)
+				r.Patch("/", userHandler.Update)
+				r.Delete("/", userHandler.Delete)
+			})
 		})
 	})
 

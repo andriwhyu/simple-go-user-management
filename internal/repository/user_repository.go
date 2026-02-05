@@ -44,7 +44,29 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *userRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
-	return nil, nil
+	query := `
+		SELECT id, name, email, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`
+
+	var user domain.User
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
@@ -108,9 +130,53 @@ func (r *userRepository) GetAll(ctx context.Context) ([]*domain.User, error) {
 }
 
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
+	query := `
+		UPDATE users
+		SET name = $1, email = $2, updated_at = $3
+		WHERE id = $4
+	`
+	user.UpdatedAt = time.Now()
+
+	result, err := r.db.ExecContext(
+		ctx,
+		query,
+		user.Name,
+		user.Email,
+		user.UpdatedAt,
+		user.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("user not found")
+	}
+
 	return nil
 }
 
 func (r *userRepository) Delete(ctx context.Context, id int) error {
+	query := `DELETE FROM users WHERE id = $1`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("user not found")
+	}
+
 	return nil
 }

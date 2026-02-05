@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"github.com/go-chi/chi/v5"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -31,4 +34,15 @@ func IsValidEmail(email string) bool {
 		return false
 	}
 	return true
+}
+
+// GetParamID performs extracted parameter from url and return it as int
+func GetParamID(r *http.Request, param string) (int, error) {
+	idStr := chi.URLParam(r, param)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
