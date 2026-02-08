@@ -4,18 +4,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	httpDelivery "github.com/andriwhyu/simple-go-user-management/internal/delivery/http"
-	"github.com/andriwhyu/simple-go-user-management/internal/infrastructure/database"
-	"github.com/andriwhyu/simple-go-user-management/internal/repository"
-	"github.com/andriwhyu/simple-go-user-management/internal/usecase"
-	"github.com/andriwhyu/simple-go-user-management/internal/utils"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	httpDelivery "github.com/andriwhyu/simple-go-user-management/internal/delivery/http"
+	"github.com/andriwhyu/simple-go-user-management/internal/infrastructure/database"
+	"github.com/andriwhyu/simple-go-user-management/internal/repository"
+	"github.com/andriwhyu/simple-go-user-management/internal/usecase"
+	"github.com/andriwhyu/simple-go-user-management/internal/utils"
+	"github.com/joho/godotenv"
 )
 
 func main() {

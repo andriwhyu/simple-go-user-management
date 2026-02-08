@@ -10,6 +10,16 @@ services:
       - "5432:5432"  # Maps the container's port to the host
     volumes:
       - user_management:/var/lib/postgresql/data  # Persistent storage
+  user_management:
+    container_name: user_management_app
+    image: user-management:${APP_VERSION}
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: "postgres"
+    ports:
+      - "8080:8080"
+    profiles: ["app"]
 
 volumes:
   user_management:
