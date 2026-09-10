@@ -3,9 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/andriwhyu/simple-go-user-management/internal/utils"
 	"log"
 	"time"
+
+	"github.com/andriwhyu/simple-go-user-management/internal/utils"
 
 	_ "github.com/lib/pq"
 )

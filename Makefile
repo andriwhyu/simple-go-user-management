@@ -1,22 +1,28 @@
 MIGRATION_PATH := ./migrations
 APP_VERSION := $(shell jq -r '.version' version.json)
 
+DB_ADDR ?= postgres://admin:adminpassword@localhost:5432/user_management?sslmode=disable
+
 # Database migration recipes
 .PHONY: migrate-create
 migrate-create:
-	@migrate create -ext sql -dir $(MIGRATION_PATH) -seq $(filter-out $@,$(MAKECMDGOALS))
+	@test -n "$(MIGRATION_NAME)" || { echo "MIGRATION_NAME is required, e.g. make migrate-create MIGRATION_NAME=create_users_table"; exit 1; }
+	@migrate create -ext sql -dir $(MIGRATION_PATH) -seq $(MIGRATION_NAME)
 
 .PHONY: migrate-up
 migrate-up:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_ADDR) up
 
+# N_MIGRATION: number of migration that need to be rollback. N_MIGRATION=1 undo last migration
 .PHONY: migrate-down
 migrate-down:
-	@migrate -path=$(MIGRATION_PATH) -database=$(DB_ADDR) down $(filter-out $@,$(MAKECMDGOALS))
+	@migrate -path=$(MIGRATION_PATH) -database=$(DB_ADDR) down $(N_MIGRATION)
 
+# V_MIGRATION: Set the schema migration to version V_MIGRATION without running any migration
 .PHONY: migrate-force
 migrate-force:
-	@migrate -path=$(MIGRATION_PATH) -database=$(DB_ADDR) force $(filter-out $@,$(MAKECMDGOALS))
+	@test -n "$(V_MIGRATION)" || { echo "V_MIGRATION is required, e.g. make migrate-force V_MIGRATION=1"; exit 1; }
+	@migrate -path=$(MIGRATION_PATH) -database=$(DB_ADDR) force $(V_MIGRATION)
 
 # image building and docker related recipes
 .PHONY: build-image
