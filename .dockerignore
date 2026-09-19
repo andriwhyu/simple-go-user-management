@@ -5,3 +5,7 @@ Makefile
 .git
 .gitignore
 .dockerignore
+.env
+.env.*
+mise.toml
+.air.toml
