@@ -4,7 +4,6 @@ APP_VERSION := $(shell jq -r '.version' version.json)
 # read DB related variables from .env
 ifneq (,$(wildcard .env))
 include .env
-export
 endif
 
 # set default if .env empty
