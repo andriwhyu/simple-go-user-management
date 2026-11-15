@@ -16,6 +16,17 @@ DB_SSLMODE ?= disable
 
 DB_ADDR ?= postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
 
+# builder related
+PLATFORM := linux/amd64,linux/arm64
+BUILDER ?=
+BUILDER_FLAG :=
+IMAGE_NAME ?= user-management
+REGISTRY ?= ghcr.io/andriwhyu
+
+ifneq ($(BUILDER),)
+	BUILDER_FLAG = --builder $(BUILDER)
+endif
+
 # Database migration recipes
 .PHONY: migrate-create
 migrate-create:
@@ -40,7 +51,14 @@ migrate-force:
 # image building and docker related recipes
 .PHONY: build-image
 build-image:
-	@docker buildx build -t user-management:$(APP_VERSION) -f build/Dockerfile . --load
+	@docker buildx build -t $(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION) -f build/Dockerfile . --load
+
+.PHONY: publish-multiarch
+publish-multiarch:
+	@docker buildx build $(BUILDER_FLAG) --platform $(PLATFORM) \
+		-t $(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION) \
+		--provenance=true --sbom=true \
+		-f build/Dockerfile . --push
 
 .PHONY: env-docker
 env-docker:
