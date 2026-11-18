@@ -16,6 +16,18 @@ DB_SSLMODE ?= disable
 
 DB_ADDR ?= postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
 
+# multiplatform images
+BUILDER ?=
+BUILDER_FLAG :=
+BUILDER_DRIVER ?= docker-container
+PLATFORM := linux/amd64,linux/arm64
+REGISTRY ?= ghcr.io/andriwhyu
+IMAGE_NAME ?= user-management
+
+ifneq ($(BUILDER),)
+	BUILDER_FLAG = --builder $(BUILDER)
+endif
+
 # Database migration recipes
 .PHONY: migrate-create
 migrate-create:
@@ -38,9 +50,22 @@ migrate-force:
 	@migrate -path=$(MIGRATION_PATH) -database="$(DB_ADDR)" force $(V_MIGRATION)
 
 # image building and docker related recipes
+.PHONY: init-builder
+init-builder:
+	@[ -z "$(BUILDER)" ] || \
+	docker buildx inspect $(BUILDER) > /dev/null 2>&1 || \
+	docker buildx create --name $(BUILDER) --driver $(BUILDER_DRIVER) --bootstrap --use
+
 .PHONY: build-image
-build-image:
-	@docker buildx build -t user-management:$(APP_VERSION) -f build/Dockerfile . --load
+build-image: init-builder
+	@docker buildx build $(BUILDER_FLAG) -t $(IMAGE_NAME):$(APP_VERSION) -f build/Dockerfile . --load
+
+.PHONY: publish-multiarch
+publish-multiarch: init-builder
+	@docker buildx build $(BUILDER_FLAG) --platform $(PLATFORM) \
+		-t $(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION) \
+		--provenance=true --sbom=true \
+		-f build/Dockerfile . --push
 
 .PHONY: env-docker
 env-docker:
