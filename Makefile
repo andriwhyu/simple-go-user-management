@@ -21,7 +21,8 @@ BUILDER ?=
 BUILDER_FLAG :=
 BUILDER_DRIVER ?= docker-container
 PLATFORM := linux/amd64,linux/arm64
-REGISTRY ?= ghcr.io/andriwhyu
+REGISTRY ?= ghcr.io
+REGISTRY_NAMESPACE ?= andriwhyu
 IMAGE_NAME ?= user-management
 
 ifneq ($(BUILDER),)
@@ -61,11 +62,17 @@ build-image: init-builder
 	@docker buildx build $(BUILDER_FLAG) -t $(IMAGE_NAME):$(APP_VERSION) -f build/Dockerfile . --load
 
 .PHONY: publish-multiarch
-publish-multiarch: init-builder
+publish-multiarch: init-builder registry-login
 	@docker buildx build $(BUILDER_FLAG) --platform $(PLATFORM) \
-		-t $(REGISTRY)/$(IMAGE_NAME):$(APP_VERSION) \
+		-t $(REGISTRY)/$(REGISTRY_NAMESPACE)/$(IMAGE_NAME):$(APP_VERSION) \
 		--provenance=true --sbom=true \
 		-f build/Dockerfile . --push
+
+.PHONY: registry-login
+registry-login:
+	@test -n "$(REGISTRY_TOKEN)" || { echo "REGISTRY_TOKEN is required, set it in .env file"; exit 1; }
+	@echo "login to $(REGISTRY)/$(REGISTRY_NAMESPACE)..."
+	@echo $(REGISTRY_TOKEN) | docker login $(REGISTRY) -u $(REGISTRY_NAMESPACE) --password-stdin
 
 .PHONY: env-docker
 env-docker:
