@@ -3,20 +3,23 @@ services:
     image: postgres:17
     container_name: postgres_user_management
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpassword
-      POSTGRES_DB: user_management
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-adminpassword}
+      POSTGRES_DB: ${DB_NAME:-user_management}
     ports:
       - "5432:5432"  # Maps the container's port to the host
     volumes:
       - user_management:/var/lib/postgresql/data  # Persistent storage
   user_management:
     container_name: user_management_app
-    image: user-management:${APP_VERSION}
+    image: ${IMAGE_NAME:-user-management}:${APP_VERSION}
     depends_on:
       - postgres
     environment:
       DB_HOST: "postgres"
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-adminpassword}
+      DB_NAME: ${DB_NAME:-user_management}
     ports:
       - "8080:8080"
     profiles: ["app"]

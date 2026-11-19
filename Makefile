@@ -76,11 +76,14 @@ registry-login:
 
 .PHONY: env-docker
 env-docker:
-	@echo "APP_VERSION=$(APP_VERSION)"
-	@echo "APP_VERSION=$(APP_VERSION)" > ./build/.env
+	@echo "APP_VERSION=$(APP_VERSION)" | tee ./build/.env
+	@echo "DB_USER=$(DB_USER)" | tee -a ./build/.env
+	@echo "DB_NAME=$(DB_NAME)" | tee -a ./build/.env
+	@echo "IMAGE_NAME=$(IMAGE_NAME)" | tee -a ./build/.env
+	@echo "DB_PASSWORD=$(DB_PASSWORD)" >> ./build/.env
 
 .PHONY: build-db
-build-db:
+build-db: env-docker
 	@cd build && docker-compose up -d
 
 .PHONY: local-server
@@ -93,7 +96,7 @@ local-server:
 run-local: build-db local-server
 
 .PHONY: run-docker
-run-docker: env-docker
+run-docker: build-image env-docker
 	@cd build && docker-compose --profile app up -d
 
 .PHONY: clean
