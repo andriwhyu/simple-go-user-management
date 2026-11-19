@@ -101,5 +101,5 @@ run-docker: build-image env-docker
 
 .PHONY: clean
 clean:
-	@cd build && docker-compose down
+	@cd build && docker-compose --profile app down
 	@rm -f ./build/.env
